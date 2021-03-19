@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
 import logging
-logging.basicConfig(filename='test/example.log', level=logging.DEBUG, filemode='w', format='\n%(asctime)s\n%(message)s')
+logging.basicConfig(filename='example.log', level=logging.DEBUG, filemode='w', format='\n%(asctime)s\n%(message)s')
 logging.Formatter('\n%(asctime)s - %(message)s')
 
 def visualize_clusters(clusters, centroids, iteration):
@@ -68,14 +68,31 @@ class KMeansClustering:
         
         #Add the closest point to the corresponding centroid to the cluster array.
         #We do this to avoid formation of empty clusters
-        res = np.where(euc == euc.min(axis=1)[:, np.newaxis])  #indices of the first entered points
-        # print(f'first:{first_indices}')
-        uni, ind =  np.unique(res[0])
-        res2 = uni, res[1][ind]
-        # if len(np.unique(res[1])) < len(res[1]):
-            
-        u, i, inv, c = np.unique(res[1], return_index=True, return_inverse=True, return_counts=True)
-        logging.debug(f'euc:{euc}\nres(first_indices): {res}\nres2: {res2}\neuc[res]: {euc[res]}\nunique_index(res[1]): {np.unique(res[1], return_index=True, return_inverse=True, return_counts=True)}\n')
+        # res = np.where(euc == euc.min(axis=1)[:, np.newaxis])  #indices of the first entered points
+        n = euc.shape[1]
+        res = np.argmin(euc, axis=1)
+        logging.debug(f'type(res):{type(res)}')
+        resu = np.unique(res)
+        l = len(res)
+        lu = len(resu)
+        first_indices = np.full(euc.shape[0], -1)
+        if lu == l:
+            first_indices = res
+        else:
+            arr = []
+            for i in range(lu):
+                logging.debug(f'arr entries: {np.where(res==i)}')
+                arr.append(np.where(res==i))    #!DOUBTFUL
+            for i in range(n):
+                if len(arr[i]) == 1:
+                    first_indices[arr[i]] = i
+                    logging.debug(f'fi after equal:\nfi:{fi}, i:{i}')
+                elif len(arr[i]) > 1:
+                    logging.debug(f'euc entries for arr[i]={arr[i]} and i={i}\neuc[arr[i], i]:{euc[arr[i], i]}')
+                    temp = np.argmin(euc[arr[i], i])    #!DOUBTFUL
+                    first_indices[temp] = i
+        logging.debug(f'euc:{euc}\nfirst_indices on completion:{first_indices}')
+        # logging.debug(f'argmin:{np.argmin(euc, axis=1)}\neuc:{euc}\neuc.shape:{euc.shape}\nres(first_indices): {res}\nres2: {res2}\neuc[res]: {euc[res2]}\n')
 
         cluster_array = X[first_indices]
         cluster_array = list(np.expand_dims(cluster_array, axis=1))
