@@ -1,0 +1,1 @@
+Replace previous rows and columns of euc with infinty.
