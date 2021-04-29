@@ -2,27 +2,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
 import logging
-logging.basicConfig(filename='example.log', level=logging.DEBUG,  format='\n%(asctime)s\n%(message)s')
+logging.basicConfig(filename='example.log', level=logging.DEBUG, filemode='w', format='\n%(asctime)s\n%(message)s')
 logging.Formatter('\n%(asctime)s - %(message)s')
 
-def visualize_clusters(clusters, centroids, iteration):
+def visualize_clusters(clusters, centroids):
 
-    fig, ax = plt.subplots()
-    ax.annotate(f'c{0}', (centroids[0,0], centroids[0,1]))
-    ax.scatter(clusters[0][:,0], clusters[0][:,1], color='blue')
-    ax.annotate(f'c{1}', (centroids[1,0], centroids[1,1]))
-    ax.scatter(clusters[1][:,0], clusters[1][:,1], color='green')
-    ax.scatter(centroids[:,0], centroids[:,1], color = 'red')
-
-    # ax.pause(2)
-    ax.set_xlim((0, count))
-    ax.set_ylim((0, count))
-    ax.set_xlabel('X axis')
-    ax.set_ylabel('Y axis')
-    ax.set_title(f'Iteration {iteration}')
-
-
-
+    # fig, ax = plt.subplots()
+    # scatter-plot of centroids
+    plt.scatter(centroids[:, 0], centroids[:, 1],
+                marker='s', c='#F008', label='Centroids')
+    # for i in range(len(centroids)):
+    #     plt.annotate(f'c{i}', (centroids[0,0], centroids[0,1]))
+    rng = np.random.default_rng()
+    # generate random color values for data points in each cluster
+    colors = rng.random(size=(n_clusters, 4), dtype=np.float32)
+    # opacity set to 0.5 for all points
+    colors[:, 3] = 1
+    for i in range(n_clusters):
+        # scatter-plot of all data points belonging to different clusters
+        plt.scatter(clusters[i][:, 0], clusters[i]
+                    [:, 1], marker='.', color=tuple(colors[i]))
+    # plt.pause(2)
+    plt.xlim((0, count))
+    plt.ylim((0, count))
+    plt.xlabel('X axis')
+    plt.ylabel('Y axis')
+    plt.title(f'Result')
+    plt.legend()
 class KMeansClustering:
     def runKMeans(self, X: np.ndarray, n_clusters: int, n_iterations: int) -> (list, np.array):
         '''
@@ -36,9 +42,9 @@ class KMeansClustering:
         for i in range(n_iterations):
             self.allocate(X)
             self.update_centroids()
-        logging.debug(f'KMeans results after allocate:\nX:{X}\nclusters:{self.clusters}\nlen:{len(self.clusters)}\nlen1:{len(self.clusters[0])}\nlen2:{len(self.clusters[1])}')
-            # if X.shape[1] == 2:
-            #     visualize_clusters(self.clusters, self.centroids, i)
+        if X.shape[1] == 2:
+            visualize_clusters(self.clusters, self.centroids)
+        # logging.debug(f'KMeans results after allocate:\nX:{X}\nclusters:{self.clusters}\nlen:{len(self.clusters)}\nlen1:{len(self.clusters[0])}\nlen2:{len(self.clusters[1])}')
         return self.clusters, self.centroids
     
     def init_centroids(self, X: np.ndarray):
@@ -83,16 +89,16 @@ class KMeansClustering:
                 break
             else:
                 arr = []
-                for i in range(l): #!FIXME:changed from lu to l
-                    logging.debug(f'arr entries: {np.where(res==i)}, i:{i}')
+                for i in range(l): 
+                    # logging.debug(f'arr entries: {np.where(res==i)}, i:{i}')
                     arr.append(np.where(res==i)[0])    #!DOUBTFUL
-                logging.debug(f'euc:{euc}\nres:{res}\narr:{arr}')
-                for i in range(l): #!FIXME:changed from n to lu to l
+                # logging.debug(f'euc:{euc}\nres:{res}\narr:{arr}')
+                for i in range(l): 
                     if len(arr[i]) == 1:
                         first_indices[arr[i]] = i
-                        logging.debug(f'fi after equal:\nfi:{first_indices}, i:{i}')
+                        # logging.debug(f'fi after equal:\nfi:{first_indices}, i:{i}')
                     elif len(arr[i]) > 1:
-                        logging.debug(f'euc entries for arr[i]={arr[i]} and i={i}\neuc[arr[i], i]:{euc[arr[i], i]}')
+                        # logging.debug(f'euc entries for arr[i]={arr[i]} and i={i}\neuc[arr[i], i]:{euc[arr[i], i]}')
                         temp = np.argmin(euc[arr[i], i])    #!DOUBTFUL
                         first_indices[temp] = i
             # logging.debug(f'argmin:{np.argmin(euc, axis=1)}\neuc:{euc}\neuc.shape:{euc.shape}\nres(first_indices): {res}\nres2: {res2}\neuc[res]: {euc[res2]}\n')           
@@ -101,10 +107,10 @@ class KMeansClustering:
                 col_ind = np.nonzero(np.isin(np.arange(n),first_indices))
                 euc[:, col_ind[0]] = euc[col_ind[0], :] = np.inf
                 m,n = euc.shape
-                logging.debug(f'euc in while:{euc}\nnp.isin(np.arange(n), first_indices):{ np.nonzero(np.isin(np.arange(n),first_indices))}')
+                # logging.debug(f'euc in while:{euc}\nnp.isin(np.arange(n), first_indices):{ np.nonzero(np.isin(np.arange(n),first_indices))}')
             else:
                 break
-        logging.debug(f'euc:{euc}\nfirst_indices on completion:{first_indices}')
+        # logging.debug(f'euc:{euc}\nfirst_indices on completion:{first_indices}')
         cluster_array = X[first_indices]
         cluster_array = list(np.expand_dims(cluster_array, axis=1))
 
@@ -130,7 +136,7 @@ class KMeansClustering:
             if not c == -1:
                 cluster_array[c] = np.append(cluster_array[c], [X[i]], axis=0)    #add the point to the corresponding cluster
         # if len(X) == 2 and (cluster_array[0].shape == (2,2) or cluster_array[1].shape == (2,2)):
-        logging.debug(f'first_indices: {first_indices}\nmin_indices: {min_indices}\ncentroids: {self.centroids}')
+        # logging.debug(f'first_indices: {first_indices}\nmin_indices: {min_indices}\ncentroids: {self.centroids}')
         #update the fair clusters array 
         self.clusters = cluster_array
     
@@ -147,37 +153,33 @@ class KMeansClustering:
         #Update fair copy 
         self.centroids = centroids
 
+def numConcat(li: list):
+    '''
+    Utility function to concatenate two float numbers in a list.
+    Reference: https://www.geeksforgeeks.org/python-program-to-concatenate-two
+    -integer-values-into-one/
+    '''
+    num1, num2 = li
+    # Convert both the numbers to strings
+    num1 = str(int(num1))
+    num2 = str(int(num2))
+    # Concatenate the strings
+    num1 += num2
+    return int(num1)
 
-# X = np.genfromtxt('Examples/datasets/k_means_clustering.txt')
-# count = 2
-        
 # Visualization available
-X = np.empty((0, 2))
+n_clusters = 10
 count = 100
+X = np.empty((0, 2))
 rng = np.random.default_rng()
 i = 0
 while i < count:
     xy = rng.choice(count, 2, replace=False)
-    if xy not in X:
+    if numConcat(xy) not in list(map(numConcat, X)):
         X = np.append(X, [xy], axis=0)
     else:
         i -= 1
-    print(i)
     i += 1
-
-# X=np.array([[44., 56.],
-#  [43., 58.],
-#  [42., 52.]])
-
-# X = np.empty((0, 3))
-# count = 1000
-# for i in range(count):
-#     x = np.random.randint(count) 
-#     y = np.random.randint(count) 
-#     z = np.random.randint(count) 
-#     X = np.append(X, [[x, y, z]], axis=0)
-
-n_clusters = 2
 
 start = perf_counter()
 KMC = KMeansClustering()
